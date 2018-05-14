@@ -1,0 +1,24 @@
+# fixed Makefile part (not auto-generated)
+
+all: $(MAIN_BIN) $(REGEX_BIN) $(MKWORD_BIN) $(MKTBL_BIN)
+
+$(MAIN_BIN): $(MAIN_OBJ) $(XTN_OBJ)
+	$(CC) -o $(MAIN_BIN) $(MAIN_OBJ) $(XTN_OBJ) $(LDFLAGS)
+
+$(MKTBL_BIN): $(MKTBL_OBJ) $(XTN_OBJ)
+	$(CC) -o $(MKTBL_BIN) $(MKTBL_OBJ) $(XTN_OBJ) $(LDFLAGS)
+
+$(REGEX_BIN): $(REGEX_OBJ)
+	$(CC) -o $(REGEX_BIN) $(REGEX_OBJ) $(LDFLAGS)
+
+$(MKWORD_BIN): $(MKWORD_OBJ)
+	$(CC) -o $(MKWORD_BIN) $(MKWORD_OBJ) $(LDFLAGS)
+
+clean:
+	rm -f $(MAIN_OBJ) $(MAIN_BIN) $(XTN_OBJ)
+	rm -f $(MKTBL_OBJ) $(MKTBL_BIN)
+	rm -f $(REGEX_OBJ) $(REGEX_BIN)
+	rm -f $(MKWORD_OBJ) $(MKWORD_BIN)
+
+distclean: clean
+	rm -f Makefile xtn_method.h xtn_method.c

@@ -1,0 +1,8 @@
+# charset spec
+
+alpha                  = a-zA-Z
+alpha-numeric          = a-zA-Z0-9
+alpha-numeric-symbol14 = a-zA-Z0-9!-/
+alpha-space            = a-zA-Z\x20
+printable              = \x20-~
+all                    = \x00-\xff

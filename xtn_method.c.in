@@ -1,0 +1,12 @@
+/* 
+   Plug-in definition (don't touch it :)
+
+   Copyright (C) Bernardo Reino (lepton@runbox.com)
+
+   20021122
+*/
+
+#include "xtn_def.h"
+#include "xtn_method.h"
+
+struct xtn_module_t xtn_all[] = {

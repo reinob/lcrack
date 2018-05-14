@@ -1,0 +1,348 @@
+
+                      ** lcrack: Lepton's Crack **
+
+    /------------------------------------------------------------\
+    |  Generic password hash cracker                             |
+    |                                                            |
+    |  Copyright (C) Bernardo Reino (lepton@runbox.com)          |
+    |            and Miguel Dilaj (nekromancer@eudoramail.com)   |
+    |                                                            |
+    |  20021208                                                  |
+    \------------------------------------------------------------/
+
+Credits/
+-------/
+
+To the es.comp.hackers newsgroup, especially to TyPhOoN, znôrt, 
+PijusMagnificus, Chachini, CastleMan, user, and all the others whom 
+I've forgotten to mention.
+
+The Lotus Domino HTTP hash implementation is based partially on
+code provided by Jeff Fay (jeff@sdii.com)
+
+The SHA-1 module has been contributed by Burcin Erocal 
+(burcin@math.bilgi.edu.tr)
+
+To all our beta testers out there.
+
+Disclaimer/
+----------/
+
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) `AS IS' AND ANY EXPRESS OR 
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+ OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+ IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF 
+ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Introduction/
+------------/
+
+Lepton's Crack is a generic password cracker, easily customizable with
+a simple plug-in system. It can perform a dictionary-based (wordlist)
+attack, as well as a brute-force (incremental) password scan.
+
+For the incremental scan, the user can provide a regex-like expression
+that will be enumerated, thus checking every possible combination. This
+powerful feature effectively combines `shoulder-surfing' with standard
+brute-forcing.
+
+By default it comes with the following modules:
+
+	* md4  : standard MD4 hash
+	* md5  : standard MD5 hash
+	* nt4  : NT MD4/Unicode
+	* dom  : Lotus Domino HTTP password
+	* sha1 : standard SHA-1 hash
+	* null : trivial 1-byte hash 
+                 (sample for plug-in developers :)
+
+Installation/
+------------/
+
+The first thing to do is to run the 'configure' shell script (beware,
+it is not the standard 'autoconf' stuff.. :). This simple script will
+try to determine what compiler to use, which flags to set, and will
+generate the 'Makefile' and 'xtn_method.[ch]' depending on what modules 
+are available (mod_*.[ch]).
+
+If you want to add or delete modules, the best procedure is to type
+'make distclean', then copy or remove the module files as needed, and
+type './configure' again.
+
+Compilation/
+-----------/
+
+Use the 'Makefile' generated in the previous step. Make sure you check 
+all the settings (compiler, flags, etc.) in the Makefile, and adjust 
+as needed.
+
+Typing 'make' will generate the 'lcrack' executable file.
+
+Usage/
+-----/
+
+The command-line usage is as follows:
+
+usage: lcrack [-q | -v] -m <method> [<opts>] <file> ..
+ -o  <file>     : output password file
+ -d  <file>     : use word list from <file>
+ -t  <file>	: use pre-computed word list from <file>
+ -s  <charset>  : use specified charset for incremental
+ -s# <name>     : use charset from charset.txt file
+ -l  <lenset>   : use specified length-set for incremental
+ -g  <regex>    : enumerate regex for incremental
+ -g# <name>	: use regex from regex.txt file
+ -x<mode>[+|-]  : activate/deactivate specified mode
+   mode = l     : login mode
+   mode = f     : fast word list mode
+   mode = s     : smart word list mode
+   mode = b     : brute-force mode
+ -stdin		: stdin (external) mode
+ -rand          : randomized brute-force mode
+ -h             : display usage information and exit
+ <method>       : hash algorithm, one of:
+                { 'dom' 'md4' 'md5' 'nt4' 'null' 'sha1' }
+
+The '-m' option sets the hashing method, and should match with
+the algorithm that was used to create the input file(s).
+
+The '-d' option enables the dictionary-attack, using the dictionary
+provided. Multiple dictionaries can be specified, using multiple
+'-d <file>' options. The format of the dictionary file is very 
+simple: one word per line :)
+
+The '-t' option enables the table-lookup attack. The given file
+is a sequence of (word, hash) pairs, where 'word' is padded to
+16 bytes, and the hash is exactly 16 (binary) bytes. Obviously
+this is only useful for 16-byte hashes, but if that's the case
+(as it is with the Lotus Domino hash) the look-up will be
+extremely fast.
+
+To create such a table, use the include mktbl program.
+
+By default none of the modes will be active. You can activate or deactivate
+any mode at will, using the '-x' option.
+
+With the '-s' option you can specify the character set that will
+be used during the brute-force scan. The default set is 'a-z0-9'.
+You can use a simple compact form to specify the set, using the '-'
+character, which defines a range of characters.
+
+Using the '-s#' option followed by a name, lcrack will use the
+character set defined in the charset.txt (which will be searched
+in the current directory, your home directory, the directory where
+lcrack is running from, or /etc, in that order). The format of the
+file is like:
+
+--<-- charset.txt
+# charset spec
+
+alpha                  = a-zA-Z
+alpha-numeric          = a-zA-Z0-9
+alpha-numeric-symbol14 = a-zA-Z0-9!-/
+alpha-space            = a-zA-Z\x20
+printable              = \x20-~
+all                    = \x00-\xff
+--<--
+
+For example: -s 'A-M0-7aq-z' will 'expand' to the following:
+'01234567ABCDEFGHIJKLMaqrstuvwxyz' (yes, it's sorted).
+
+The '-l' option sets the password lengths that will be checked
+during the brute-force scan. The syntax is similar to that of the
+character set, but you must use ',' to separate groups. That is:
+-l '1,2,4-6,9' will expand to { 1, 2, 4, 5, 6, 9 }
+
+By default, the brute-forcing will try, in order, every possible
+password, using the specified character set and length set. If
+the '-rand' option is given, the search will try passwords in a
+random fashion, instead of sequentially.
+
+The number of possible passwords will be computed by the program
+before starting, so it knows how many random passwords it should
+try, *BUT* this mode will not guarantee that every password is
+found, because it might happen that some word gets repeated.
+
+Alternatively you can provide a regex-like expression, which will
+(hopefully) reduce the number of passwords to test. Lepton's Crack
+will enumerate the regular expression, testing each combination.
+
+For example: -g 'abc[0-9]z' would try passwords whose first
+letter is one of { a, b, c }, the second letter is a digit (0-9),
+and the third, and last[*] letter, is 'z'.
+
+You can also use wildcards '[*]', and lcrack will expand them to
+a combination of symbols taken from the defined character set. In
+order to use wildcards effectively, you must supply a length
+parameter (or range), using the '-l' option. The wildcards will
+expand and compress in a way that the total length is always one
+of the specified lengths. The enumeration will generate *every*
+possible combination (ie. nothing will be missed), and in a strictly
+increasing-length order.
+
+There is also support for a regex.txt file, similar to the charset.txt
+above, so that you can define your favorite regex's there.
+
+File format/
+-----------/
+
+Each password file (more than one can be specified) contains a user 
+entry in each line. Each entry has the following format:
+
+        Login:Hash[Comment]
+
+Where 'Login' will be the user-name (can be anything, it is not
+used by the program except in the 'login' mode).
+
+'Hash' is the hexadecimal representation of the password hash.
+
+Whatever comes after the hash (':comment', for example) will be
+silently ignored.
+
+Cracking/
+--------/
+
+Now, suppose you have a file containing Lotus Domino HTTP password
+hashes, like this:
+
+--<<-- passwd.txt --
+abc:24572fa0a43d8203f9b18f0fc3a38bb3:ABC
+root:0ae0a8c0c7e4761948a6c490cc651395:SECRET
+Mike:23B3D19CE5790E51457D7D1E36EDCB10:Nekromancer
+lepton:772a755d7020ed0bcafbc7b0088554b9:lepton1
+piru:ae108c3142bac881d0575a372a4f4139:pirul
+juan:756944e56c60f6f3c7210b698cbf7026:juanjuan
+--<<--
+
+(Note the use of the 'comment' field to store the actual password,
+just for convenience :)
+
+Now that everything is clear, here's the program output for this
+simple example:
+
+--<<--
+$ ./lcrack -m dom -d words -xl+ -xf+ -xb+ -s a-z -l 1-8 passwd.txt
+xtn: initialized (domino HTTP hash) module
+loaded: CSET[26] = { abcdefghijklmnopqrstuvwxyz }
+loaded: LSET[8] = { 1 2 3 4 5 6 7 8 }
+dbg: loading 'test/dom.test'
+mode: null password, loaded 6 passwords
+mode: login single crack, loaded 6 passwords
+found: login(abc), passwd(ABC)
+found: login(juan), passwd(juanjuan)
+found: login(lepton), passwd(lepton1)
+mode: fast dictionary search, loaded 3 passwords
+found: login(Mike), passwd(Nekromancer)
+found: login(root), passwd(SECRET)
+mode: incremental, loaded 1 password
+Length = 1, Total = 26
+Length = 2, Total = 676
+Length = 3, Total = 17576
+Length = 4, Total = 456976
+Length = 5, Total = 11881376
+found: login(piru), passwd(pirul)
+Lapse: 91.676s, Checked: 8060689, Found: 6/6, Speed: 87925 passwd/s
+--<<--
+
+Some debugging output is printed on the screen, but technically it
+goes to 'stderr', so it is safe to redirect 'stdout' to a file to
+get all passwords there, while everything else (*and* the passwords
+found) will be displayed on 'stderr'.
+
+Performance/
+-----------/
+
+Lepton's Crack can check about 90000 Lotus Domino and about 700000 
+MD4/MD5/NT-MD4 passwords per second using a 850Mhz Pentium III.
+
+Notice that the program is written in plain-ANSI C[*], and hopefully
+coded with optimization in mind :), but that's entirely up to the
+compiler you use.
+
+[*] Not really, it uses gettimeofday(2) and strdup(3). The former is
+used only for printing the statistics line at the end, and the
+latter can be trivially implemented using malloc(3) and strcpy(3).
+
+Proactive password auditing/
+---------------------------/
+
+Domino administrators will benefit from this program (at least that's
+what we expect), because they can simply audit their entire NAB in
+search for bad passwords (i.e. equal to the UserID, dictionary word,
+etc.)
+
+To make it easy to get all the hashes in a file to feed into lcrack,
+the following LotusScript agent has been contributed.
+
+(It has to be put into names.nsf, and will generate a 'hashes.txt'
+file with the structure " USERID:HASH ", and if something strange
+is found, for example new R5 hashes or unhashed passwords, they will
+go to the 'aliens.txt' file. I discovered some unhashed passwords in
+our names.nsf, and I'm still wondering what happened...)
+
+===============================================
+
+    Dim session As New notessession
+    Dim db As NotesDatabase
+    Dim view As NotesView
+    Dim doc As NotesDocument
+    Dim user, pass, total As String
+    Dim fileNum As Integer
+    Dim alienfileNum As Integer
+    Dim fileName As String
+    Dim alienfileName As String
+    
+    Set db = session.CurrentDatabase
+    Set view = db.GetView("People")
+    Set doc = view.GetFirstDocument
+    
+    fileNum% = Freefile()
+    fileName$ = "hashes.txt"
+    
+    Open fileName$ For Output As fileNum%
+    
+    alienfileNum% = Freefile()
+    alienfileName$ = "aliens.txt"
+    
+    Open alienfileName$ For Output As alienfileNum%
+    
+    While Not(doc Is Nothing)
+	user = doc.ShortName(0)
+	pass = doc.HTTPPassword(0)
+	
+	If pass = "" Goto siguiente
+	If Len(pass) <> 32 Goto alien
+	total = user & ":" & pass
+	
+	Write #fileNum%, total
+	Goto siguiente
+	
+    alien:
+	total = user & ":" & pass
+	Write #alienfileNum%, total
+	
+    siguiente:
+	Set doc = view.GetNextDocument(doc)
+
+    Wend
+    
+    Close fileNum%
+    Close alienfileNum%
+    
+    Print "Finished..."
+===============================================
+
+NOTE: take into account that the program produces THIS:
+
+    " USERID:PASSWORD "
+    
+and you need THIS:
+
+    USERID:PASSWORD
+    
+so process the file with the filter of your preference ;-)

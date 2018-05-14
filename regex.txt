@@ -1,0 +1,4 @@
+# regex spec
+
+admin    = adm[*]
+lepton   = [0-9]\x20[*][xyz]

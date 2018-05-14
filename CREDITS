@@ -1,0 +1,26 @@
+Bernardo Reino <lepton@runbox.com> is the main author of Lepton's Crack.
+
+Miguel Dilaj <nekromancer@eudoramail.com> is the program mantainer,
+	coordinator, and researcher.
+
+Jeff Fay <jeff@sdii.com> provided a Lotus Domino HTTP hash implementation,
+	which was used as a base for the implementation in Lepton's Crack.
+
+Burcin Erocal <burcin@math.bilgi.edu.tr> contributed a SHA-1 module.
+
+Piero Bruneti <pbrunati@nestonline.com> has made many contributions to
+        the project (support for LM hash, password prefix & suffix, etc.)
+
+Matteo Bruneti <mattbrun@libero.dot.it) has written a graphical front-end
+        for lcrack (lcFE).
+
+Other people who have reported or fixed bugs in or contributed other
+code to Lepton's Crack:
+
+Tino Hirschmann <Tino.Hirschmann@t-systems.com>
+ESPoRa <dnartallo@fibertel.com.ar>
+joe joe <joenciso@hotmail.com>
+Sergiusz Pawlowicz <ser@metalab.unc.edu>
+Stefan Bredow <r-driver@web.de>
+J.A. Gutierrez <spd@daphne.cps.unizar.es>
+Scott Stevens <scottondanet@msn.com>

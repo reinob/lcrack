@@ -1,0 +1,61 @@
+20040914/
+- Added support for any ASCII character (ie. also non-printable) in
+  the charset and regex definition, via \0(octal), \x(hex), \(decimal)
+
+20040912/
+- Added support for a user-generated charset.txt and regex.txt file
+  that can be used for storing common charsets and regex's.
+- Minor optimization to mod_dom.c (domino HTTP hash)
+
+20040902/
+- I'm back.. ;)
+- Regex's are now enumerated in order of increasing length, so
+  that shorter passwords are found much faster, without having
+  to 'zig-zag' through all the lenset (which is the 'natural' way
+  for my algorithm..)
+- A separate program, called 'regex' enumerates passwords (using
+  same syntax as lcrack, ie. -s, -g, -l) and prints them on stdout.
+  This program can be used stand-alone, or in combination with
+  lcrack's 'stdin' mode..
+- Included 'mkword' utility, which will extract words form any
+  given input (stdin). Useful for creating dictionaries..
+  
+20030401/
+- Regex's support variable-length wildcards, so things like
+  [qwas][*][0-9] will try every password starting with one of
+  { q w a s }, ending with a digit, and having anything else
+  in the middle (based on whatever charset/lenset has been
+  specified, of course..)
+- In case I didn't say it, there is a special mode, called 'stdin'
+  (ie. lcrack -stdin ..) which will allow lcrack to be provided
+  with passwords to try from an external program, via a pipe, eg.
+  
+  password_generator | lcrack -m nt4 -stdin hashes.txt
+  
+  This way lcrack's power can be extended arbitrarily without
+  touching the code.
+
+20030325/
+- Added experimental support for regex enumeration (for use
+  in brute-forcing, when you have partial knowledge of the key)
+  Read README.devel.regex for more information
+
+20030324/
+- Added check for null passwords. It happens too often,
+  so I had to account for that :)
+
+20021231/
+- Added SHA-1 module. Thanks to Burcin Erocal.
+- Hmm, and I wish everyone a happy new year! ;)
+
+20021216/
+- Minor optimization (~ 2%) of the Lotus Domino hash calculation.
+
+20021215/
+- Bug-fix. If a password was repeated in the input file, only one
+  of them was found.
+
+20021211/
+- v1.0 is finished.
+- Support for Domino HTTP passwords (R4), MD4, MD5, and NT (MD4/Unicode).
+

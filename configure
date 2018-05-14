@@ -1,0 +1,291 @@
+#!/bin/sh
+
+Makefile=Makefile
+
+if [ -f $Makefile ]; then
+    make clean
+    rm -f $Makefile
+fi
+
+# detect compiler
+
+if [ -z "$CC" ]; then
+    for COMPILER in gcc cc icc pgcc ; do
+	AUX=`which $COMPILER 2>/dev/null`
+	if [ $? -eq 0 -a -n "$AUX" ]; then
+	    CC=$COMPILER;
+	    break;
+	fi
+    done
+fi
+
+if [ -z "$CC" ]; then
+    echo $0: compiler not found, please set the CC environment variable
+    exit 1
+fi
+
+AUX=`which $CC 2>/dev/null`
+echo dbg: $CC compiler found, at $AUX
+
+XFLAGS=
+
+case $CC in
+    gcc*)
+	VERSION=`$CC -v 2>&1 | tail -1 | cut -d" " -f3 2> /dev/null`
+
+	case $VERSION in
+	    3\.*)
+	    echo "dbg: GNU $VERSION compiler detected"
+
+	    if [ -z "$1" ]; then
+		echo "Please select your CPU, one of {"
+		echo "   pentium, pentium-mmx, pentiumpro, pentium2, "
+		echo "   pentium3, pentium4, k6, k6-2, k6-3, athlon, "
+		echo "   athlon-tbird, athlon-4, athlon-xp, athlon-mp"
+		echo -n "} = " 
+		read ARCH
+	    else
+		ARCH=$1
+	    fi
+	    
+	    ARCHOPT="-march=$ARCH"
+
+	    case $ARCH in
+		pentium4)
+		    CPUFLAGS="-msse2";;
+		pentium2|pentium3)
+		    CPUFLAGS="-msse";;
+		pentiumpro)
+		    CPUFLAGS="-mmmx";;
+		pentium-mmx)
+		    CPUFLAGS="-mmmx";;
+		pentium)
+		    CPUFLAGS="";;
+		athlon*)
+		    CPUFLAGS="-m3dnow";;
+		k6*)
+		    CPUFLAGS="";;
+
+		*)
+		    echo "don't know how to deal with that CPU, no problem.."
+		    CPUFLAGS=
+		    ARCHOPT=
+		    ;;
+	    esac
+    
+	    XFLAGS="-O9 -Wall -fomit-frame-pointer -funroll-loops -minline-all-stringops -maccumulate-outgoing-args -finline-functions -fstrict-aliasing $ARCHOPT $CPUFLAGS"
+	    ;;
+
+	    2\.*)
+	    echo "dbg: GNU $VERSION compiler detected"
+
+	    if [ -z "$1" ]; then
+		echo "Please select your CPU, one of {"
+		echo "   i386, i486, i586 = pentium, i686 = pentiumII, k6"
+		echo -n "} = " 
+		read ARCH
+	    else
+		ARCH=$1
+	    fi
+	    
+	    case $ARCH in
+		i[3456]86)
+		    ;;
+		pentium[234])
+		    ARCH="i686";;
+		pentium)
+		    ARCH="i586";;
+		k6*)
+		    ARCH="k6";;
+
+		*)
+		    echo "don't know how to deal with that CPU, no problem.."
+		    CPUFLAGS=
+		    ARCHOPT=
+		    ;;
+	    esac
+	    
+	    XFLAGS="-O3 -Wall -fomit-frame-pointer -funroll-loops -finline-functions -fstrict-aliasing -march=$ARCH"
+	    ;;
+	esac
+	;;
+
+    pgcc*)
+	VERSION=`$CC -V 2> /dev/null | head -2 | tail -1 | cut -d" " -f2`
+
+	case $VERSION in
+	    4*)
+		echo "dbg: Portland PGCC $VERSION compiler detected"
+		
+		if [ -z "$1" ]; then
+		    echo "Please select your CPU, one of {"
+		    echo "   pentium, pentiumpro, pentium2, pentium3,"
+		    echo "   pentium4, athlon, athlon-xp, athlon-mp"
+		    echo -n "} = " 
+		    read ARCH
+		else
+		    ARCH=$1
+		fi
+	    
+		case $ARCH in
+		    pentium4)
+			CPUFLAGS="-tp p7 -fastsse";;
+		    pentium3)
+			CPUFLAGS="-tp p6 -fastsse";;
+		    pentium2)
+			CPUFLAGS="-tp p6 -fast";;
+		    pentiumpro)
+			CPUFLAGS="-tp p6 -fast";;
+		    pentium)
+			CPUFLAGS="-tp p5 -fast";;
+		    athlon)
+			CPUFLAGS="-tp athlon -fast";;
+		    athlon*)
+			CPUFLAGS="-tp athlonxp -fastsse";;
+		    
+		    *)
+			echo "don't know how to deal with that CPU, no problem.."
+			CPUFLAGS="-tp px -fast"
+			;;
+		esac
+		
+		XFLAGS=$CPUFLAGS
+		;;
+	esac
+	;;
+
+    icc*)
+	VERSION=`$CC -v 2>&1 | cut -d" " -f2`
+
+	case $VERSION in
+	    8*)
+		echo "dbg: Intel ICC $VERSION compiler detected"
+		
+		if [ -z "$1" ]; then
+		    echo "Please select your CPU, one of {"
+		    echo "   pentium, pentiumpro, pentium2, pentium3, pentium4"
+		    echo -n "} = " 
+		    read ARCH
+		else
+		    ARCH=$1
+		fi
+	    
+		case $ARCH in
+		    pentium4)
+			CPUFLAGS="-march=pentium4";;
+		    pentium3)
+			CPUFLAGS="-march=pentiumiii";;
+		    pentium2)
+			CPUFLAGS="-march=pentiumii";;
+		    pentiumpro)
+			CPUFLAGS="-march=pentiumpro";;
+		    pentium)
+			CPUFLAGS="-march=pentium";;
+		    
+		    *)
+			echo "don't know how to deal with that CPU, no problem.."
+			CPUFLAGS=""
+			;;
+		esac
+		
+		XFLAGS="-fast $CPUFLAGS"
+		;;
+	esac
+esac
+
+if [ -z "$XFLAGS" ]; then
+    echo "dbg: unknown compiler version detected (please check Makefile)"
+    CFLAGS="-O"
+else
+    CFLAGS=$XFLAGS
+    echo "dbg: CFLAGS=$CFLAGS"
+fi
+
+# generate the Makefile
+
+(cat <<EOF
+# auto-generated Makefile, please adjust if needed
+
+CC=$CC
+CFLAGS?=$CFLAGS
+LDFLAGS?=
+
+EOF
+) > $Makefile
+
+# select name of executable program
+
+if [ "$TERM" = "cygwin" ]; then
+    PROGRAM=lcrack.exe
+    REGEX=regex.exe
+    MKWORD=mkword.exe
+    MKTBL=mktbl.exe
+else
+    PROGRAM=lcrack
+    REGEX=regex
+    MKWORD=mkword
+    MKTBL=mktbl
+fi
+
+(cat <<EOF
+MAIN_BIN = $PROGRAM
+MAIN_HDR = xtn_def.h xtn_method.h global.h
+MAIN_SRC = engine.c set.c key.c xtn_method.c md4.c md5.c base64.c sha1.c
+MAIN_OBJ = engine.o set.o key.o xtn_method.o md4.o md5.o base64.o sha1.o
+
+MKTBL_BIN = $MKTBL
+MKTBL_HDR = xtn_def.h xtn_method.h global.h
+MKTBL_SRC = mktbl.c xtn_method.c md4.c md5.c base64.c sha1.c
+MKTBL_OBJ = mktbl.o xtn_method.o md4.o md5.o base64.o sha1.o
+
+REGEX_BIN = $REGEX
+REGEX_HDR = global.h
+REGEX_SRC = regex.c set.c
+REGEX_OBJ = regex.o set.o
+
+MKWORD_BIN = $MKWORD
+MKWORD_HDR = 
+MKWORD_SRC = mkword.c
+MKWORD_OBJ = mkword.o
+
+EOF
+) >> $Makefile
+
+# select modules to build
+
+echo dbg: generating plug-in section
+
+cp -f xtn_method.h.in xtn_method.h
+cp -f xtn_method.c.in xtn_method.c
+
+/bin/ls mod_*.h | while read MOD_HDR; do
+ MOD=`echo $MOD_HDR | cut -d_ -f2 | cut -d. -f1`
+
+ echo dbg: found \'$MOD\' plug-in at ${MOD_HDR}/${MOD_HDR%.h}.c
+
+ echo "#include \"${MOD_HDR}\"" >> xtn_method.h
+ echo "  { \"$MOD\", &xtn_${MOD}_init, &xtn_${MOD}_cmp, &xtn_${MOD}_crypt }," >> xtn_method.c
+done
+
+cat xtn_method.c.out >> xtn_method.c
+
+(cat <<EOF
+XTN_HDR=`echo mod_*.h`
+XTN_SRC=`echo mod_*.c`
+XTN_OBJ=`echo mod_*.c | sed -e 's/.c/.o/g'`
+
+BIN_EXTRA=README COPYING CHANGES AUTHORS CREDITS charset.txt regex.txt
+SRC_EXTRA=configure xtn_method.h.in xtn_method.c.in Makefile.in Makefile
+
+EOF
+) >> $Makefile
+
+cat Makefile.in >> $Makefile 
+
+echo dbg: Makefile generated
+echo
+echo Please check that the auto-generated Makefile looks good.
+echo Then compile it typing \'make\'
+echo
+
+exit 0
